@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrics Terminal</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: monospace;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    #lyrics {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #start {
+      background: transparent;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 8px 14px;
+      margin-bottom: 20px;
+      font-family: monospace;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #start:disabled {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <button id="start">Mulai</button>
+  <div id="lyrics"></div>
+
+  <audio id="music" src="song.mp3" preload="auto"></audio>
+
+  <script>
+    const lyrics = [
+      // Format: { time: detik, text: "Isi lirik" }
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" },
+      { time: null, text: "" }
+    ];
+
+    const music = document.getElementById("music");
+    const button = document.getElementById("start");
+    const display = document.getElementById("lyrics");
+
+    // Abaikan baris yang belum diisi.
+    const validLyrics = lyrics
+      .filter(item =>
+        Number.isFinite(item.time) &&
+        item.time >= 0 &&
+        item.text.trim() !== ""
+      )
+      .sort((a, b) => a.time - b.time);
+
+    // Siapkan tempat untuk setiap baris lirik.
+    const lyricElements = validLyrics.map(() => {
+      const line = document.createElement("div");
+      display.appendChild(line);
+      return line;
+    });
+
+    // Mulai musik setelah tombol ditekan.
+    button.addEventListener("click", async () => {
+      if (!validLyrics.length) {
+        button.textContent = "Isi lirik dulu";
+        return;
+      }
+
+      try {
+        await music.play();
+        button.style.display = "none";
+      } catch (error) {
+        button.textContent = "Coba lagi";
+      }
+    });
+
+    // Huruf muncul mengikuti waktu musik.
+    function updateLyrics() {
+      const now = music.currentTime;
+      const typingSpeed = 0.08; // Detik per huruf
+
+      validLyrics.forEach((item, index) => {
+        const next = validLyrics[index + 1];
+        const lineElement = lyricElements[index];
+
+        if (now < item.time) {
+          lineElement.textContent = "";
+          return;
+        }
+
+        const elapsed = now - item.time;
+        const visibleChars = Math.floor(elapsed / typingSpeed);
+
+        // Jika waktunya baris berikutnya tiba,
+        // selesaikan baris sebelumnya.
+        const textLength =
+          next && now >= next.time
+            ? item.text.length
+            : Math.min(item.text.length, visibleChars);
+
+        lineElement.textContent =
+          item.text.slice(0, textLength);
+      });
+    }
+
+    music.addEventListener("timeupdate", updateLyrics);
+    music.addEventListener("seeked", updateLyrics);
+
+    music.addEventListener("error", () => {
+      button.textContent = "File musik tidak ditemukan";
+      button.style.display = "inline-block";
+    });
+  </script>
+
+</body>
+</html>
